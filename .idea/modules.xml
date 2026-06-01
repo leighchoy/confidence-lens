@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/predictiveModeling.iml" filepath="$PROJECT_DIR$/.idea/predictiveModeling.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/confidence-lens.iml" filepath="$PROJECT_DIR$/.idea/confidence-lens.iml" />
     </modules>
   </component>
 </project>

@@ -41,6 +41,7 @@ def get_history(tickers, interval, start, end):
 
     try:
         history = yf.download(ticker, interval = interval, start = start, end = end,prepost=True)
+        history.columns = history.columns.droplevel(1)
 
         if history.empty:
             print("No data found for this ticker or timeframe.")
