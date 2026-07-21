@@ -1,14 +1,19 @@
 from data_scraper import get_history
-
+import pandas as pd
+import ta
 
 ticker = "NBIS"
 interval = "1d"
 start = "2026-01-01"
 end = "2026-03-13"
-history = get_history(ticker, interval, start, end)
+#history = get_history(ticker, interval, start, end)
+
+def tech_analysis(merged_df: pd.DataFrame) -> pd.DataFrame:
+    merged_df = ta.add_all_ta_features(merged_df,open = "open",high= "High",low="Low",close="Close",volume="Volume",fillna=True)
+    return merged_df
 
 
-def feature_engineering(history):
+"""def feature_engineering(history):
     df = history.copy()
 
     df['return_5d'] = df['Close'].pct_change(5)
@@ -35,3 +40,4 @@ if history is not None and not history.empty:
     print(result)
 else:
     print("There is no history yet")
+    """

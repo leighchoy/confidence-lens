@@ -7,12 +7,15 @@ import yfinance as yf
 import os
 import time
 
+
+from config import *
+
 load_dotenv()
 client = fh.Client(api_key=os.getenv('FINNHUB_API_KEY'))
 
 
 data = client.quote(
-    symbol="NBIS"
+    symbol=TICKER
 )
 finndf = pd.DataFrame([data])
 
@@ -33,32 +36,23 @@ finndf = pd.DataFrame([data])
     
 """
 
-def get_history(tickers, interval, start, end):
-    ticker = "EONR"
-    interval = "5d"
-    start = "2025-01-01"
-    end = "2026-03-12"
+def get_history():
+
+    interval = "1d"
+
 
     try:
-        history = yf.download(ticker, interval = interval, start = start, end = end,prepost=True)
-        history.columns = history.columns.droplevel(1)
+        history = yf.download(TICKER, interval = interval, start = START_DATE, end = END_DATE,prepost=True)
+        price_df = pd.DataFrame.from_dict(history)
+        price_df.columns = price_df.columns.get_level_values(0)
 
         if history.empty:
             print("No data found for this ticker or timeframe.")
             return None
-        return history
+        return price_df
 
     except Exception as e:
         print(f"Error: {e}")
         return None
 
-    return history
-
-tickers = ""
-interval = ""
-start = ""
-end = ""
-history = get_history(tickers, interval, start, end)
-
-print(history)
 
