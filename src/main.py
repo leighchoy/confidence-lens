@@ -1,8 +1,8 @@
 from src.news_scraper import get_company_news
-from src.news_scraper import add_sentiment
 from src.data_modifier import *
 from src.data_scraper import get_history
 from src.feature_engineering import tech_analysis
+from src.model import *
 import pandas as pd
 import os
 
@@ -33,7 +33,7 @@ merged_df.to_csv("../data/processed/merged_data.csv", index=True)
 
 
 news_df = tech_analysis(merged_df)
-news_df.to_csv("../data/processed/tech_analysis.csv", index =False)
-
+news_df.to_csv("../data/processed/tech_analysis.csv", index =True)
+#news_df = train_model_lr(news_df)
 
 #print(newsdf[["headline","sentiment","confidence"]].tail(30))

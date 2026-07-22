@@ -50,6 +50,8 @@ def get_company_news():
         f"&tickers={TICKER}"
         f"&time_from={AVSTART_DATE}"
         f"&time_to={AVEND_DATE}"
+        f"&limit=1000"
+        f"&outputsize=compact"
         f"&sort=LATEST"
         f"&apikey={os.getenv('ALPHAV_API_KEY')}"
     )

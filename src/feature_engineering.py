@@ -2,42 +2,33 @@ from data_scraper import get_history
 import pandas as pd
 import ta
 
-ticker = "NBIS"
-interval = "1d"
-start = "2026-01-01"
-end = "2026-03-13"
-#history = get_history(ticker, interval, start, end)
+
 
 def tech_analysis(merged_df: pd.DataFrame) -> pd.DataFrame:
-    merged_df = ta.add_all_ta_features(merged_df,open = "open",high= "High",low="Low",close="Close",volume="Volume",fillna=True)
+    #EMA 9/26/ showing short and medium lerm  averages/trends
+    merged_df["ema_9"] = ta.trend.ema_indicator(merged_df["Close"],window = 9,fillna = True)
+    merged_df["ema_26"] = ta.trend.ema_indicator(merged_df["Close"], window=26,fillna = True)
+    #merged_df["ema_200"] = ta.trend.ema_indicator(merged_df["Close"], window=200)
+
+    #momentum TA's such as rsi and macd
+    merged_df["rsi"] = ta.momentum.rsi(merged_df["Close"], window =14,fillna = True)
+    merged_df["macd"] = ta.trend.macd_diff(merged_df["Close"],fillna = True)
+
+    #volatility
+    merged_df["atr"] = ta.volatility.average_true_range(merged_df["High"], merged_df["Low"], merged_df["Close"])
+    merged_df["bollinger_high"] = ta.volatility.bollinger_hband(merged_df["Close"],fillna = True)
+    merged_df["bollinger_low"] = ta.volatility.bollinger_lband(merged_df["Close"], fillna = True)
+
+    #volume
+    merged_df["obv"] = ta.volume.on_balance_volume(merged_df["Close"],merged_df["Volume"])
+
+    merged_df["close_lag1"] = merged_df["Close"].shift(1)
+    merged_df["close_lag2"] = merged_df["Close"].shift(2)
+    merged_df["return_lag1"] = merged_df["Close"].pct_change(1)
+    merged_df["sentiment_lag1"] = merged_df["Overall_confidence"].shift(1)
+
+    merged_df["target"] = (merged_df["Close"].shift(-10) > merged_df["Close"]).astype(int)
+
+    merged_df = merged_df.dropna(subset =[ "close_lag1", "close_lag2", "return_lag1", "sentiment_lag1"])
     return merged_df
 
-
-"""def feature_engineering(history):
-    df = history.copy()
-
-    df['return_5d'] = df['Close'].pct_change(5)
-    df['return_10d'] = df['Close'].pct_change(10)
-    df['return_20d'] = df['Close'].pct_change(20)
-
-    df['volume_ratio'] = df['Volume'].div(df['Volume'].rolling(20).mean())
-    df['sma_20'] = df['Close'].rolling(20).mean()
-    df['dist_from_sma'] = (df['Close'] - df['sma_20']) / df['sma_20']
-
-    #rsi
-    delta = df['Close'].diff()
-    gain = delta.clip(lower = 0).rolling(14).mean()
-    loss = -delta.clip(upper = 0).rolling(14).mean()
-    RS = gain/loss
-    df['RSI'] = 100 - 100/(1+RS)
-    df.dropna(inplace=True)
-
-    return df
-
-
-if history is not None and not history.empty:
-    result = feature_engineering(history)
-    print(result)
-else:
-    print("There is no history yet")
-    """
