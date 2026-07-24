@@ -34,6 +34,14 @@ merged_df.to_csv("../data/processed/merged_data.csv", index=True)
 
 news_df = tech_analysis(merged_df)
 news_df.to_csv("../data/processed/tech_analysis.csv", index =True)
-#news_df = train_model_lr(news_df)
 
-#print(newsdf[["headline","sentiment","confidence"]].tail(30))
+_,_,_,_,_,y_test = prepare_data(df)
+results = []
+_,y_pred,y_prob=train_model_lr(df)
+append_summary_row(results,"Logistic Regression", "3 price features", y_test,y_pred,y_prob)
+_,y_pred,y_prob=train_model_rf(df)
+append_summary_row(results,"Random Forest Classifier", "6 price features", y_test,y_pred,y_prob)
+_,y_pred,y_prob=train_model_xgb(df)
+append_summary_row(results,"XGBoost Classifier", "6 price features", y_test,y_pred,y_prob)
+results_df = pd.DataFrame(results)
+results_df.to_csv("../data/model_training/comparison_report.csv", index=False)
