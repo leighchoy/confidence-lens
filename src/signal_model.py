@@ -1,24 +1,18 @@
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score, \
-    roc_auc_score, mean_squared_error
+    roc_auc_score
 from sklearn.dummy import DummyClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-
 from config import *
 
-import xgboost as xgb
-import seaborn as sns
-
-import numpy as np
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from news_scraper import model
+import os
 
-df = pd.read_csv("../data/processed/tech_analysis.csv", index_col=0, parse_dates=True)
 
 """
 Helper function to drop features and split data in 80/20 split.
@@ -35,6 +29,7 @@ def create_dummy(X_train,X_test, y_train, y_test):
     dummy.to_csv("../data/model_training/dummy.csv")
 
 def prepare_data(df : pd.DataFrame):
+    df.set_index("Date", inplace=True)
     split = int(len(df) * 0.8)
 
     train = df.iloc[:split]
@@ -81,9 +76,10 @@ def prepare_data(df : pd.DataFrame):
 """
 Using logistic regression as baseline.
 """
-def train_model_lr(df: pd.DataFrame):
+def train_model_lr():
+    df = pd.read_csv(processed_path("tech_analysis.csv"))
     X_train, X_test, test, train, y_train, y_test = prepare_data(df)
-
+    print(df.index)
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
@@ -142,7 +138,8 @@ def train_model_lr(df: pd.DataFrame):
 
     return model, y_pred, y_prob
 
-def train_model_rf(df : pd.DataFrame):
+def train_model_rf():
+    df = pd.read_csv(processed_path("tech_analysis.csv"))
     X_train, X_test, test, train, y_train, y_test = prepare_data(df)
 
     total_days = y_test.sum()
@@ -168,7 +165,9 @@ def train_model_rf(df : pd.DataFrame):
 
     return model, y_pred, y_prob
 
-def train_model_xgb(df: pd.DataFrame):
+def train_model_xgb():
+
+    df = pd.read_csv(processed_path("tech_analysis.csv"))
     X_train,X_test,test, train,y_train,y_test = prepare_data(df)
     total_days = y_test.sum()
     print("Threshold ROC\tF1\tRecall\tPrecision")
@@ -214,10 +213,15 @@ def append_summary_row (results, model_name, config_name, y_test, y_pred, y_prob
     })
 
 
-def evaluate_model(df : pd.DataFrame):
+def evaluate_model(df : pd.DataFrame,model_type):
     X_train, X_test, test, train, y_train, y_test = prepare_data(df)
+    if model_type == "xgboost":
+        model, y_pred , y_prob= train_model_xgb(df)
+    elif model_type == "rf":
+        model, y_pred, y_prob = train_model_rf(df)
+    else :
+        model, y_pred, y_prob = train_model_lr(df)
 
-    model, y_pred , y_prob= train_model_xgb(df)
     class_report = pd.DataFrame(classification_report(y_test, y_pred,output_dict=True)).T
     class_report["ROC AUC"] = roc_auc_score(y_test, y_prob)
     class_report["Model"] = model.__class__.__name__
@@ -258,3 +262,4 @@ def evaluate_model(df : pd.DataFrame):
 
     #plt.savefig('../data/pngs/coef.png')
 
+train_model_xgb()

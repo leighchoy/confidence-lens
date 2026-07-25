@@ -2,7 +2,7 @@ from src.news_scraper import get_company_news
 from src.data_modifier import *
 from src.data_scraper import get_history
 from src.feature_engineering import tech_analysis
-from src.model import *
+from src.signal_model import *
 import pandas as pd
 import os
 

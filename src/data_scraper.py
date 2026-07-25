@@ -1,12 +1,10 @@
-from datetime import datetime
 from dotenv import load_dotenv
 
+import requests
 import pandas as pd
 import finnhub as fh
 import yfinance as yf
 import os
-import time
-
 
 from config import *
 
@@ -55,4 +53,121 @@ def get_history():
         print(f"Error: {e}")
         return None
 
+
+def get_income_statement():
+
+    url = (
+        f"https://www.alphavantage.co/query"
+        f"?function=INCOME_STATEMENT"
+        f"&symbol={TICKER}"
+        f"&apikey={os.getenv('ALPHAV_API_KEY')}"
+
+    )
+    r = requests.get(url)
+    data = r.json()
+    articles = data.get("annualReports", [])
+    records = []
+    for article in articles:
+        records.append({
+            "fiscal_date": article["fiscalDateEnding"],
+            "ebitda": article["ebitda"],
+            "net_income": article["netIncome"],
+            "revenue": article["totalRevenue"],
+            "operating_income": article["operatingIncome"],
+            "operating_outcome": article["operatingExpenses"],
+            "gross_profit": article["grossProfit"],
+            "income_tax_expense": article["incomeTaxExpense"],
+        })
+    return pd.DataFrame(records)
+
+def get_cash_flow():
+    url = (
+        f"https://www.alphavantage.co/query"
+        f"?function=CASH_FLOW"
+        f"&symbol={TICKER}"
+        f"&apikey={os.getenv('ALPHAV_API_KEY')}"
+    )
+    r = requests.get(url)
+    data = r.json()
+    articles = data.get("annualReports", [])
+    records = []
+    for article in articles:
+        records.append({
+            "fiscal_date": article["fiscalDateEnding"],
+            "operating_cash_flow": article["operatingCashflow"],
+            "capital_expenditure": article["capitalExpenditures"],
+            "free_cash_flow": article["operatingCashFlow"] - article["capitalExpenditures"],
+            "depreciation": article["depreciationDepletionAndAmortization"]
+        })
+
+def get_balance_sheet():
+    url = (
+        f"https://www.alphavantage.co/query"
+        f"?function=BALANCE_SHEET"
+        f"&symbol={TICKER}"
+        f"&apikey={os.getenv('ALPHAV_API_KEY')}"
+    )
+    r = requests.get(url)
+    data = r.json()
+    articles = data.get("annualReports", [])
+    records = []
+    print(url)
+    for article in articles:
+        records.append({
+            "fiscal_date": article["fiscalDateEnding"],
+            "current_assets": article["totalCurrentAssets"],
+            "total_debt": article["shortTermDebt"] + article["longTermDebt"],
+            "current_liabilities": article["totalCurrentLiabilities"],
+            "outstanding_shares": article["commonStockSharesOutstanding"]
+        })
+
+def get_earnings_call():
+    url = (
+        f"https://www.alphavantage.co/query"
+        f"?function=EARNINGS"
+        f"&symbol={TICKER}"
+        f"&apikey={os.getenv('ALPHAV_API_KEY')}"
+    )
+    r = requests.get(url)
+    data = r.json()
+    articles = data.get("annualEarnings", [])
+    records = []
+    print(url)
+    for article in  articles:
+        records.append({
+            "fiscal_date": article["fiscalDateEnding"],
+            "EPS": article["reportedEPS"],
+        })
+    articles = data.get("quarterlyEarnings", [])
+    for article in articles:
+        records.append({
+            "fiscal_date": article["fiscalDateEnding"],
+            "reported_EPS": article["reportedEPS"],
+            "estimated_EPS": article["estimatedEPS"],
+            "released_date": article["reportedDate"],
+            "surprise":article["surprise"],
+
+        })
+
+def get_earnings_estimates():
+    url =(
+        f"https://www.alphavantage.co/query"
+        f"?function=EARNINGS_ESTIMATES"
+        f"&symbol={TICKER}"
+        f"&apikey={os.getenv('ALPHAV_API_KEY')}"
+
+    )
+    r = requests.get(url)
+    data = r.json()
+
+    articles = data.get("estimates", [])
+    records = []
+
+    for article in articles:
+        records.append({
+            "date": article["date"],
+            "horizon": article["horizon"],
+            "estimated_EPS": article["eps_estimate_average"],
+            "estimated_revenue": article["revenue_estimate_average"],
+        })
 
