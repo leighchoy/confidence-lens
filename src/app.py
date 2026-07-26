@@ -3,9 +3,7 @@ from signal_model import *
 import pandas as pd
 from config import *
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-df = pd.read_csv(os.path.join(BASE_DIR, "data", "processed", "price_df.csv"),
-                 index_col=0, parse_dates=True)
+df = pd.DataFrame(pd.read_csv(processed_path("tech_analysis.csv")))
 
 st.set_page_config(page_title="Confidence Scope", layout = "wide")
 
@@ -32,4 +30,15 @@ with st.form("input_form"):
     submitted = st.form_submit_button("Analyse")
 if submitted:
     st.divider()
-    evaluate_model(df,"xgboost")
+    prediction, probability = get_prediction(df)
+    st.text("Model's Signal")
+    if prediction == 1:
+        st.success(f"Buy Signal - Model Confidence: {probability*100}%")
+    else:
+        st.warning(f"Hold/Sell Signal - Model's Probability of Positive Return in Timeframe: {probability*100}%")
+
+
+
+
+
+

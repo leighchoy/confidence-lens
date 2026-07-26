@@ -29,7 +29,7 @@ def create_dummy(X_train,X_test, y_train, y_test):
     dummy.to_csv("../data/model_training/dummy.csv")
 
 def prepare_data(df : pd.DataFrame):
-    df.set_index("Date", inplace=True)
+
     split = int(len(df) * 0.8)
 
     train = df.iloc[:split]
@@ -58,7 +58,7 @@ def prepare_data(df : pd.DataFrame):
     "close_lag2","close_lag1","return_lag1","obv","atr",
     
     """
-    drop_cols = [
+    drop_cols = ["Date",
     "target", "Close", "High", "Low", "Open",
     "Volume","Neutral_count","Avg_positive_confidence", "return_lag1", "Negative_count"
     ,"Headline_count", "close_lag2", "close_lag1", "obv"
@@ -66,8 +66,9 @@ def prepare_data(df : pd.DataFrame):
     , "Avg_negative_confidence","Positive_count" ,"sentiment_lag1"
     ]
 
-    X_train = train.drop(columns=drop_cols)
-    X_test = test.drop(columns=drop_cols)
+    X_train = train.drop(columns=drop_cols).reset_index(drop=True)
+    X_test = test.drop(columns=drop_cols).reset_index(drop=True)
+
     y_train = train["target"]
     y_test = test["target"]
 
@@ -76,8 +77,8 @@ def prepare_data(df : pd.DataFrame):
 """
 Using logistic regression as baseline.
 """
-def train_model_lr():
-    df = pd.read_csv(processed_path("tech_analysis.csv"))
+def train_model_lr(df:pd.DataFrame):
+
     X_train, X_test, test, train, y_train, y_test = prepare_data(df)
     print(df.index)
     scaler = StandardScaler()
@@ -138,12 +139,12 @@ def train_model_lr():
 
     return model, y_pred, y_prob
 
-def train_model_rf():
-    df = pd.read_csv(processed_path("tech_analysis.csv"))
+def train_model_rf(df:pd.DataFrame):
+
     X_train, X_test, test, train, y_train, y_test = prepare_data(df)
 
     total_days = y_test.sum()
-    print("Threshold ROC\tF1\tRecall\tPrecision")
+    #print("Threshold ROC\tF1\tRecall\tPrecision")
 
     model = RandomForestClassifier(
     n_estimators=100,
@@ -165,9 +166,8 @@ def train_model_rf():
 
     return model, y_pred, y_prob
 
-def train_model_xgb():
+def train_model_xgb(df:pd.DataFrame):
 
-    df = pd.read_csv(processed_path("tech_analysis.csv"))
     X_train,X_test,test, train,y_train,y_test = prepare_data(df)
     total_days = y_test.sum()
     print("Threshold ROC\tF1\tRecall\tPrecision")
@@ -192,7 +192,7 @@ def train_model_xgb():
 
     buy_signals = y_pred.sum()
 
-    return model, y_pred, y_prob
+    return model, y_pred, y_prob, X_test
 
 def append_summary_row (results, model_name, config_name, y_test, y_pred, y_prob):
     buy_signals = y_pred.sum()
@@ -216,7 +216,7 @@ def append_summary_row (results, model_name, config_name, y_test, y_pred, y_prob
 def evaluate_model(df : pd.DataFrame,model_type):
     X_train, X_test, test, train, y_train, y_test = prepare_data(df)
     if model_type == "xgboost":
-        model, y_pred , y_prob= train_model_xgb(df)
+        model, y_pred , y_prob,_= train_model_xgb(df)
     elif model_type == "rf":
         model, y_pred, y_prob = train_model_rf(df)
     else :
@@ -226,10 +226,10 @@ def evaluate_model(df : pd.DataFrame,model_type):
     class_report["ROC AUC"] = roc_auc_score(y_test, y_prob)
     class_report["Model"] = model.__class__.__name__
 
-    print("Accuracy Test\n", accuracy_score(y_test, y_pred))
+    """print("Accuracy Test\n", accuracy_score(y_test, y_pred))
 
     class_report.to_csv("../data/model_training/trimmed_class_report_xgb.csv", index=True)
-
+"""
     buy_signals = y_pred.sum()
     total_days = len(y_pred)
     signal_ratio = buy_signals / total_days
@@ -240,7 +240,7 @@ def evaluate_model(df : pd.DataFrame,model_type):
         "Probability" : y_prob,
         "Actual" : y_test
     })
-    results.to_csv("../data/model_training/trimmed_results_xgb.csv", index=False)
+    #results.to_csv("../data/model_training/trimmed_results_xgb.csv", index=False)
     importance = pd.DataFrame({
         "feature": X_train.columns,
         "importance": model.feature_importances_  # abs value since negative = predicts down
@@ -252,7 +252,7 @@ def evaluate_model(df : pd.DataFrame,model_type):
     plt.xlabel('Coefficient magnitude')
     plt.tight_layout()
 
-    plt.savefig('../data/pngs/trimmed_feature_importance_rxgb.png')
+    #plt.savefig('../data/pngs/trimmed_feature_importance_rxgb.png')
 
     """coef = pd.DataFrame({
         "feature": X_train.columns,
@@ -262,4 +262,11 @@ def evaluate_model(df : pd.DataFrame,model_type):
 
     #plt.savefig('../data/pngs/coef.png')
 
-train_model_xgb()
+    return class_report
+
+def get_prediction(df,threshold = 0.4):
+    model,_,_ ,X_test= train_model_xgb(df)
+    latest = X_test.iloc[[-1]]
+    probability = model.predict_proba(latest)[0][1]
+    prediction = 1 if probability >= threshold else 0
+    return prediction, probability
