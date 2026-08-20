@@ -8,7 +8,7 @@ import pandas as pd
 import datetime
 from config import *
 from language_model import get_lm_thesis
-from qa_model import calculate_all,calculate_dcf
+from fundamental_calculations import calculate_all,calculate_dcf
 from data_scraper import *
 from data_modifier import *
 

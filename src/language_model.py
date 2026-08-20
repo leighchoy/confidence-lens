@@ -2,7 +2,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from groq import Groq
 from config import *
-from qa_model import calculate_all
+from fundamental_calculations import calculate_all
 from signal_model import get_prediction, xgb_model
 import os
 import traceback
