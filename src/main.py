@@ -1,47 +1,36 @@
-from src.news_scraper import get_company_news
-from src.data_modifier import *
-from src.data_scraper import get_history
-from src.feature_engineering import tech_analysis
-from src.signal_model import *
-import pandas as pd
-import os
 
-#build price dataframe
-price_df = get_history()
+from data_modifier import *
+from feature_engineering import tech_analysis
+from data_scraper import *
+from language_model import *
+import time
 
-#build headline dataframe
-news_df = get_company_news()
-
-
-#save raw data
-news_df.to_csv("../data/raw/news_df.csv", index=False)
-
-price_df.to_csv("../data/raw/price_df.csv", index=True)
-
-#clean data
+ticker = "NBIS"
+start_date = "2025-01-01"
+end_date = "2026-05-10"
+price_df = get_history(ticker, start_date, end_date)
+print("price_df",price_df.head())
 price_df = clean_history(price_df)
-price_df.to_csv("../data/processed/price_df.csv", index=True)
+print("cleaned")
+tech_analysis_df = tech_analysis(price_df)
+print("tech_analysis_df",tech_analysis_df.head())
 
-#clean and add sentiment and confidence
-news_df = clean_news(news_df)
+prediction, probability = get_prediction(xgb_model, tech_analysis_df)
+print("prediction",prediction,"probability",probability)
+balance_df = get_balance_sheet(ticker)
+time.sleep(1.1)
+income_df = get_income_statement(ticker)
+time.sleep(1.1)
+cash_df = get_cash_flow(ticker)
+time.sleep(1.1)
+company_overview = get_company_overview(ticker)
 
-news_df.to_csv("../data/processed/news_df.csv", index=True)
+print(balance_df.columns.tolist())
+print(income_df.columns.tolist())
+print(cash_df.columns.tolist())
+print(company_overview.columns.tolist())
 
+financials, dcf = calculate_all(balance_df, price_df, income_df, cash_df, company_overview)
+print("financials",financials.head(),"dcf",dcf.head())
+thesis = get_lm_thesis(ticker, financials, dcf, results_df, company_overview)
 
-merged_df = merge_data(price_df, news_df)
-merged_df.to_csv("../data/processed/merged_data.csv", index=True)
-
-
-news_df = tech_analysis(merged_df)
-news_df.to_csv("../data/processed/tech_analysis.csv", index =True)
-
-_,_,_,_,_,y_test = prepare_data(news_df)
-results = []
-_,y_pred,y_prob=train_model_lr(news_df)
-append_summary_row(results,"Logistic Regression", "3 price features", y_test,y_pred,y_prob)
-_,y_pred,y_prob=train_model_rf(news_df)
-append_summary_row(results,"Random Forest Classifier", "6 price features", y_test,y_pred,y_prob)
-_,y_pred,y_prob=train_model_xgb(news_df)
-append_summary_row(results,"XGBoost Classifier", "6 price features", y_test,y_pred,y_prob)
-results_df = pd.DataFrame(results)
-results_df.to_csv("../data/model_training/comparison_report.csv", index=False)

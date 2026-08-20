@@ -8,10 +8,13 @@ from xgboost import XGBClassifier
 from config import *
 
 import os
+import joblib
 import pandas as pd
 import matplotlib.pyplot as plt
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+xgb_model = joblib.load(os.path.join(BASE_DIR, 'models','xgb_model.pkl'))
+feature_cols = joblib.load(os.path.join(BASE_DIR, 'models', 'xgb_features.pkl'))
 
-import os
 
 
 """
@@ -19,7 +22,7 @@ Helper function to drop features and split data in 80/20 split.
 Not using randomised split as future data would help the model predict in a more biased manner.
 """
 
-def create_dummy(X_train,X_test, y_train, y_test):
+def create_dummy(X_train,X_test, y_train, y_test) -> None:
     dummy = DummyClassifier(strategy="most_frequent")
     dummy.fit(X_train, y_train)
     dummy_pred = dummy.predict(X_test)
@@ -28,7 +31,7 @@ def create_dummy(X_train,X_test, y_train, y_test):
     dummy = pd.DataFrame(classification_report(y_test,dummy_pred,output_dict = True)).T
     dummy.to_csv("../data/model_training/dummy.csv")
 
-def prepare_data(df : pd.DataFrame):
+def prepare_data(df : pd.DataFrame)->tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
 
     split = int(len(df) * 0.8)
 
@@ -60,10 +63,9 @@ def prepare_data(df : pd.DataFrame):
     """
     drop_cols = ["Date",
     "target", "Close", "High", "Low", "Open",
-    "Volume","Neutral_count","Avg_positive_confidence", "return_lag1", "Negative_count"
-    ,"Headline_count", "close_lag2", "close_lag1", "obv"
-    , "bollinger_high", "Overall_confidence", "Avg_negative_confidence"
-    , "Avg_negative_confidence","Positive_count" ,"sentiment_lag1"
+    "Volume", "return_lag1",  "close_lag2", "close_lag1", "obv"
+    , "bollinger_high", "Overall_confidence"
+    , "Avg_negative_confidence"
     ]
 
     X_train = train.drop(columns=drop_cols).reset_index(drop=True)
@@ -80,7 +82,7 @@ Using logistic regression as baseline.
 def train_model_lr(df:pd.DataFrame):
 
     X_train, X_test, test, train, y_train, y_test = prepare_data(df)
-    print(df.index)
+
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
@@ -91,9 +93,9 @@ def train_model_lr(df:pd.DataFrame):
     """
     model = LogisticRegression(
         C=c,
-        penalty= "l1" or "l2",
-        solver= "liblinear" or "saga",
-        class_weight= None or "balanced",
+        penalty= "l1",
+        solver= "liblinear",
+        class_weight= None,
         max_iter= 1000
 
     )
@@ -166,11 +168,10 @@ def train_model_rf(df:pd.DataFrame):
 
     return model, y_pred, y_prob
 
-def train_model_xgb(df:pd.DataFrame):
+def train_model_xgb(df:pd.DataFrame) -> tuple[XGBClassifier,int,float,pd.DataFrame,pd.DataFrame]:
 
     X_train,X_test,test, train,y_train,y_test = prepare_data(df)
     total_days = y_test.sum()
-    print("Threshold ROC\tF1\tRecall\tPrecision")
     #for n in[0.01,0.1,0.2,0.3,0.5]:
     model = XGBClassifier(
 
@@ -192,7 +193,7 @@ def train_model_xgb(df:pd.DataFrame):
 
     buy_signals = y_pred.sum()
 
-    return model, y_pred, y_prob, X_test
+    return model, y_pred, y_prob, X_test, X_train
 
 def append_summary_row (results, model_name, config_name, y_test, y_pred, y_prob):
     buy_signals = y_pred.sum()
@@ -213,10 +214,10 @@ def append_summary_row (results, model_name, config_name, y_test, y_pred, y_prob
     })
 
 
-def evaluate_model(df : pd.DataFrame,model_type):
+def evaluate_model(df : pd.DataFrame,model_type) -> pd.DataFrame:
     X_train, X_test, test, train, y_train, y_test = prepare_data(df)
     if model_type == "xgboost":
-        model, y_pred , y_prob,_= train_model_xgb(df)
+        model, y_pred , y_prob,_,_= train_model_xgb(df)
     elif model_type == "rf":
         model, y_pred, y_prob = train_model_rf(df)
     else :
@@ -264,9 +265,13 @@ def evaluate_model(df : pd.DataFrame,model_type):
 
     return class_report
 
-def get_prediction(df,threshold = 0.4):
-    model,_,_ ,X_test= train_model_xgb(df)
-    latest = X_test.iloc[[-1]]
-    probability = model.predict_proba(latest)[0][1]
-    prediction = 1 if probability >= threshold else 0
-    return prediction, probability
+def get_prediction(model,X : pd.DataFrame,threshold : float = 0.4)-> tuple[int,float]:
+    try:
+        X = X[feature_cols]
+        latest = X.iloc[[-1]]
+        probability = model.predict_proba(latest)[0][1]
+        prediction = 1 if probability >= threshold else 0
+        return prediction, probability
+    except Exception as e:
+        print(f"Error: {e}")
+

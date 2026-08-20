@@ -20,7 +20,7 @@ pipe = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
 
 
 #function for getting sentiment score of an individual string (headline)
-def sentiment_score(text):
+"""def sentiment_score(text):
     if not isinstance(text, str) or text.strip() == "":
         return {"score": 0.0, "label": "neutral"}
     result = pipe(text[:512])[0]
@@ -28,22 +28,22 @@ def sentiment_score(text):
 
 
 
-    return {"score": score, "label": result["label"]}
+    return {"score": score, "label": result["label"]}"""
 
 #choosing to only use headlines for sentiment analysis due to constraint on token limits and accuracy is not the main goal
 #function to add sentiment to dataframe
-def add_sentiment(news_df: pd.DataFrame) -> pd.DataFrame:
+"""def add_sentiment(news_df: pd.DataFrame) -> pd.DataFrame:
     news_df = news_df.copy()
     text = news_df["summary"].where(news_df["summary"].notna() & news_df["summary"].str.strip().ne(""), news_df["headline"])
     results = text.apply(sentiment_score)
     news_df["confidence"] = results.apply(lambda x: x["score"])
     news_df["sentiment"] = results.apply(lambda x: x["label"])
-    return news_df
+    return news_df"""
 
 #function for returning company news
 
 
-def get_company_news():
+"""def get_company_news() -> pd.DataFrame:
     url = (
         f"https://www.alphavantage.co/query"
         f"?function=NEWS_SENTIMENT"
@@ -66,7 +66,7 @@ def get_company_news():
             "sentiment_avg": article["overall_sentiment_score"],
             "sentiment_label": article["overall_sentiment_label"],
         })
-    return pd.DataFrame(records)
+    return pd.DataFrame(records)"""
 
 
 
