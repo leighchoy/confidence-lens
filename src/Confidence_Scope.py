@@ -1,38 +1,37 @@
+import time
 import traceback
 
 import streamlit as st
 
+from config import xgb_model, feature_cols, model_training_path
 from feature_engineering import tech_analysis
-from signal_model import *
-import pandas as pd
+from signal_model import get_prediction
 import datetime
-from config import *
 from language_model import get_lm_thesis
-from fundamental_calculations import calculate_all,calculate_dcf
+from fundamental_calculations import calculate_all
 from data_scraper import *
 from data_modifier import *
 
+
+
 #@st.cache_data(ttl=3600)
 def run_cs_model(ticker:str,start_date:str,end_date:str):
-    price_df = get_history(ticker,start_date,end_date)
+    price_df = get_history(ticker, start_date, end_date)
     price_df = clean_history(price_df)
     tech_analysis_df = tech_analysis(price_df)
 
-    prediction,probability = get_prediction(xgb_model,tech_analysis_df)
+    prediction, probability = get_prediction(xgb_model, feature_cols, tech_analysis_df)
 
-
-    balance_df = pd.DataFrame(get_balance_sheet(ticker)
-    )
-    income_df = pd.DataFrame(get_income_statement(ticker)
-    )
-    cash_df = pd.DataFrame(get_cash_flow(ticker)
-    )
-    company_overview = pd.DataFrame(get_company_overview(ticker)
-    )
+    balance_df = get_balance_sheet(ticker)
+    time.sleep(1.1)
+    income_df = get_income_statement(ticker)
+    time.sleep(1.1)
+    cash_df = get_cash_flow(ticker)
+    time.sleep(1.1)
+    company_overview = get_company_overview(ticker)
 
     financials, dcf = calculate_all(balance_df, price_df, income_df, cash_df, company_overview)
-
-    thesis = get_lm_thesis(ticker,financials,dcf,results_df,company_overview)
+    thesis = get_lm_thesis(ticker, financials, dcf, results_df, company_overview)
 
     return{
         "prediction":prediction,
@@ -56,7 +55,7 @@ if "ticker" not in st.session_state:
     st.session_state.ticker = "NBIS"
 
 if "start_date" not in st.session_state:
-    st.session_state.start_date = datetime.date(2025, 1, 1)
+    st.session_state.start_date = datetime.date(2025, 12, 1)
 
 if "end_date" not in st.session_state:
     st.session_state.end_date = datetime.date.today()
@@ -72,7 +71,12 @@ with st.form("input_form"):
         end_date = st.date_input("Enter end date", value=st.session_state.end_date)
 
     st.divider()
-
+    if start_date >= end_date:
+        st.error("Start date must be before end date")
+        st.stop()
+    if end_date <= start_date:
+        st.error("End date must be before start date")
+        st.stop()
 
 
     submitted = st.form_submit_button("Analyse")

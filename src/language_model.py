@@ -1,9 +1,10 @@
 import pandas as pd
 from dotenv import load_dotenv
 from groq import Groq
-from config import *
+from config import model_training_path, processed_path, feature_cols
 from fundamental_calculations import calculate_all
-from signal_model import get_prediction, xgb_model
+from signal_model import get_prediction
+from config import xgb_model
 import os
 import traceback
 
@@ -14,12 +15,11 @@ client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 results_df = pd.DataFrame(pd.read_csv(model_training_path("trimmed_class_report_xgb.csv")))
 ta_df = pd.DataFrame(pd.read_csv(processed_path("tech_analysis.csv")))
 
-#Senior Tech Equity Research Analyst
-#classification_report = pd.DataFrame(pd.read_csv(processed_path(“classification_report”)))
+
 def get_lm_thesis(ticker,financials,dcf,results_df,company_overview):
     try:
 
-        prediction,probability = get_prediction(xgb_model,ta_df)
+        prediction,probability = get_prediction(xgb_model,feature_cols,ta_df)
         ROC = results_df["ROC AUC"][1]
         precision  = results_df["precision"][1]
         recall  = results_df["recall"][1]

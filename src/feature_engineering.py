@@ -1,11 +1,11 @@
-from data_scraper import get_history
+from config import processed_path, raw_path
 import pandas as pd
 import ta
 
+from data_modifier import clean_history
 
 
 def tech_analysis(merged_df: pd.DataFrame) -> pd.DataFrame:
-    #EMA 9/26/ showing short and medium lerm  averages/trends
     try:
         merged_df["ema_9"] = ta.trend.ema_indicator(merged_df["Close"],window = 9,fillna = True)
         merged_df["ema_26"] = ta.trend.ema_indicator(merged_df["Close"], window=26,fillna = True)
@@ -29,8 +29,7 @@ def tech_analysis(merged_df: pd.DataFrame) -> pd.DataFrame:
 
         merged_df["target"] = (merged_df["Close"].shift(-10) > merged_df["Close"]).astype(int)
 
-        merged_df = merged_df.dropna(subset =[ "close_lag1", "close_lag2", "return_lag1"])
+        merged_df = merged_df.dropna(subset =[ "close_lag1", "close_lag2", "return_lag1","target"])
         return merged_df
     except Exception as e:
         print(f"Error: {e}")
-

@@ -1,3 +1,5 @@
+import traceback
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score, \
     roc_auc_score
@@ -5,15 +7,14 @@ from sklearn.dummy import DummyClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-from config import *
+import xgboost
+from config import xgb_model, c, THRESHOLD, feature_cols, processed_path
 
 import os
 import joblib
 import pandas as pd
 import matplotlib.pyplot as plt
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-xgb_model = joblib.load(os.path.join(BASE_DIR, 'models','xgb_model.pkl'))
-feature_cols = joblib.load(os.path.join(BASE_DIR, 'models', 'xgb_features.pkl'))
+
 
 
 
@@ -37,35 +38,11 @@ def prepare_data(df : pd.DataFrame)->tuple[pd.DataFrame, pd.DataFrame, pd.DataFr
 
     train = df.iloc[:split]
     test = df.iloc[split:]
-    """
-    Least important features for logisitic regression:
-    "ema_26","Neutral_count","ema_9","Avg_positive_confidence", "return_lag1", "Negative_count"
-    ,"Headline_count", "close_lag2", "close_lag1", "obv", "bollinger_low"
-    , "bollinger_high", "Overall_confidence", "Avg_negative_confidence"
-    , "Avg_negative_confidence","Positive_count" ,"sentiment_lag1"
-    
-    Least important for rf
-    "target", "Close", "High", "Low", "Open",
-    "Volume","Neutral_count","Avg_positive_confidence", "return_lag1", "Negative_count"
-    ,"Headline_count", "close_lag2", "close_lag1", "obv"
-    , "bollinger_high", "Overall_confidence", "Avg_negative_confidence"
-    , "Avg_negative_confidence","Positive_count" ,"sentiment_lag1"
-     
-    Sentiment features:
-    "Avg_positive_confidence", "Avg_negative_confidence",
-    "Headline_count", "Positive_count", "Negative_count",
-    "Neutral_count", "Overall_confidence", "sentiment_lag1"
-    
-    Price features:
-    "macd","ema_9","ema_26","rsi","bollinger_high","bollinger_low",
-    "close_lag2","close_lag1","return_lag1","obv","atr",
-    
-    """
+
     drop_cols = ["Date",
     "target", "Close", "High", "Low", "Open",
     "Volume", "return_lag1",  "close_lag2", "close_lag1", "obv"
-    , "bollinger_high", "Overall_confidence"
-    , "Avg_negative_confidence"
+    , "bollinger_high"
     ]
 
     X_train = train.drop(columns=drop_cols).reset_index(drop=True)
@@ -123,19 +100,6 @@ def train_model_lr(df:pd.DataFrame):
     or a boosted recall signal (0.4).
     """
     y_pred = (y_prob >= THRESHOLD).astype(int)
-    total_days = y_test.sum()
-
-    """print("Threshold\tROC\tF1\tRecall\tPrecision")
-    for threshold in (0.3, 0.35, 0.4, 0.45,0.49, 0.5):
-        y_pred = (y_prob >= threshold).astype(int)
-        buy_signals = y_pred.sum()
-        print(threshold,"\t",
-        round(roc_auc_score(y_test, y_prob),3),"\t",
-        round((f1_score(y_test,y_pred)),3),"\t",
-        round((recall_score(y_test,y_pred)),3),"\t",
-        round((precision_score(y_test,y_pred)),3),"\t",
-        buy_signals,"\t",total_days)
-    print(y_test.value_counts())"""
 
     create_dummy(X_train, X_test, y_train, y_test)
 
@@ -146,8 +110,6 @@ def train_model_rf(df:pd.DataFrame):
     X_train, X_test, test, train, y_train, y_test = prepare_data(df)
 
     total_days = y_test.sum()
-    #print("Threshold ROC\tF1\tRecall\tPrecision")
-
     model = RandomForestClassifier(
     n_estimators=100,
     max_depth=3,
@@ -160,7 +122,6 @@ def train_model_rf(df:pd.DataFrame):
 
     y_prob = model.predict_proba(X_test)[:, 1]
     threshold = 0.4
-    #for threshold in[0.3,0.35,0.4,0.45,0.5,0.55]:
     y_pred = (y_prob >= threshold).astype(int)
 
     buy_signals = y_pred.sum()
@@ -172,7 +133,6 @@ def train_model_xgb(df:pd.DataFrame) -> tuple[XGBClassifier,int,float,pd.DataFra
 
     X_train,X_test,test, train,y_train,y_test = prepare_data(df)
     total_days = y_test.sum()
-    #for n in[0.01,0.1,0.2,0.3,0.5]:
     model = XGBClassifier(
 
                     max_depth=3,
@@ -185,15 +145,16 @@ def train_model_xgb(df:pd.DataFrame) -> tuple[XGBClassifier,int,float,pd.DataFra
 
     )
     model.fit(X_train, y_train)
+    model.save_model("../src/models/xgb_model.json")
 
     y_prob = model.predict_proba(X_test)[:, 1]
     threshold = 0.25
-        #for threshold in[0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55]:
     y_pred = (y_prob >= threshold).astype(int)
 
     buy_signals = y_pred.sum()
 
     return model, y_pred, y_prob, X_test, X_train
+
 
 def append_summary_row (results, model_name, config_name, y_test, y_pred, y_prob):
     buy_signals = y_pred.sum()
@@ -227,13 +188,8 @@ def evaluate_model(df : pd.DataFrame,model_type) -> pd.DataFrame:
     class_report["ROC AUC"] = roc_auc_score(y_test, y_prob)
     class_report["Model"] = model.__class__.__name__
 
-    """print("Accuracy Test\n", accuracy_score(y_test, y_pred))
-
-    class_report.to_csv("../data/model_training/trimmed_class_report_xgb.csv", index=True)
-"""
     buy_signals = y_pred.sum()
     total_days = len(y_pred)
-    signal_ratio = buy_signals / total_days
 
 
     results = pd.DataFrame({
@@ -241,7 +197,6 @@ def evaluate_model(df : pd.DataFrame,model_type) -> pd.DataFrame:
         "Probability" : y_prob,
         "Actual" : y_test
     })
-    #results.to_csv("../data/model_training/trimmed_results_xgb.csv", index=False)
     importance = pd.DataFrame({
         "feature": X_train.columns,
         "importance": model.feature_importances_  # abs value since negative = predicts down
@@ -253,19 +208,9 @@ def evaluate_model(df : pd.DataFrame,model_type) -> pd.DataFrame:
     plt.xlabel('Coefficient magnitude')
     plt.tight_layout()
 
-    #plt.savefig('../data/pngs/trimmed_feature_importance_rxgb.png')
-
-    """coef = pd.DataFrame({
-        "feature": X_train.columns,
-        "magnitude": abs(model.coef_[0]) ,
-        "coefficient": (model.coef_[0]),
-    }).sort_values("magnitude", ascending=False)"""
-
-    #plt.savefig('../data/pngs/coef.png')
-
     return class_report
 
-def get_prediction(model,X : pd.DataFrame,threshold : float = 0.4)-> tuple[int,float]:
+def get_prediction(model,feature_cols,X : pd.DataFrame,threshold : float = 0.4)-> tuple[int,float]:
     try:
         X = X[feature_cols]
         latest = X.iloc[[-1]]
@@ -274,4 +219,4 @@ def get_prediction(model,X : pd.DataFrame,threshold : float = 0.4)-> tuple[int,f
         return prediction, probability
     except Exception as e:
         print(f"Error: {e}")
-
+        print(traceback.format_exc())

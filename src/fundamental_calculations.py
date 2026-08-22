@@ -1,16 +1,19 @@
+import traceback
+
 import pandas as pd
-from config import *
+
+from config import processed_path
 
 
-
-
+"""
+WACC = ((Debt/(Total Value))* Cost of Debt) + ((Equity/(Total Value)) x Cost of Equity)
+Total value = debt + equity
+Cost of debt = interest rate x (1-corporate tax rate)
+Cost of Equity = risk-free rate + (beta x market risk premium)
+"""
 def calculate_wacc(settings:dict) -> float:
-    """
-    WACC = ((Debt/(Total Value))* Cost of Debt) + ((Equity/(Total Value)) x Cost of Equity)
-    Total value = debt + equity
-    Cost of debt = interest rate x (1-corporate tax rate)
-    Cost of Equity = risk-free rate + (beta x market risk premium)
-    """
+
+
 
     try:
 
@@ -30,7 +33,10 @@ def calculate_wacc(settings:dict) -> float:
         Cost of equity 
         Using fixed values to simplify
         """
-        cost_of_equity = 0.05 + (0.06 * 1.2)
+        beta = float(settings["Beta"].iloc[0])
+        risk_free_rate = 0.05
+        market_risk_premium = 0.06
+        cost_of_equity = risk_free_rate + (market_risk_premium * beta)
 
         #Cost of Debt
         cost_of_debt = settings["interest_expense"] / settings["total_debt"] if settings["total_debt"] > 0 else 0.05
@@ -42,10 +48,9 @@ def calculate_wacc(settings:dict) -> float:
         wacc = (weight_debt * cost_of_debt * (1 - tax_rate)) + (weight_equity * cost_of_equity)
 
         return wacc
-
     except Exception as e:
-        print(f"WACC calculation error: {e}")
-        return 0.08
+        print(e)
+        print(traceback.format_exc())
 
 
 
@@ -151,7 +156,8 @@ def calculate_all(balance_df : pd.DataFrame, price_df: pd.DataFrame, income_df :
             "prior_fcf" : cash_df["free_cash_flow"].iloc[1],
             "operating_income" : income_df["operating_income"].iloc[0],
             "operating_outcome" : income_df["operating_outcome"].iloc[0],
-            "operating_cash_flow" : cash_df["operating_cash_flow"].iloc[0]
+            "operating_cash_flow" : cash_df["operating_cash_flow"].iloc[0],
+            "Beta": company_overview["Beta"]
         }
 
         wacc = calculate_wacc(settings)
@@ -168,7 +174,7 @@ def calculate_all(balance_df : pd.DataFrame, price_df: pd.DataFrame, income_df :
         else :
             price_to_ocf = "Calculation for Price/Operating Cash Flow not meaningful; company has negative operating cash flow"
 
-        operating_margin = settings["operating_income"] / settings["operating_outcome"]
+        operating_margin = settings["operating_income"] / settings["revenue"]
         revenue_cagr = ((income_df["revenue"].iloc[0] / income_df["revenue"].iloc[3]) ** (1/3)-1)
         equity = settings["outstanding_shares"] * settings["current_price"]
         debt_to_equity = settings["total_debt"] / equity
@@ -179,21 +185,23 @@ def calculate_all(balance_df : pd.DataFrame, price_df: pd.DataFrame, income_df :
             "Revenue CAGR": f"{revenue_cagr:.1%}",
             "Equity": format_amount(equity),
             "Debt/Equity": f"{debt_to_equity:.2f}x",
-            "WACC": f"{wacc:.1%}",
+            "WACC": f"{wacc:.2%}",
             "Price/Free Cash Flow": f"{price_to_fcf}",
             "Price/Operating Cash Flow": f"{price_to_ocf}",
             "Free Cash Flow Growth": f"{fcf_growth:.1%}",
             "Year Prior Free Cash Flow": format_amount(settings["prior_fcf"]),
             "Current Free Cash Flow": format_amount(settings["market_fcf"]),
             "Market Cap": format_amount(market_cap),
-            "Beta": f"{company_overview["Beta"].iloc[0]:.2f}",
-            "P/E": f"{company_overview["P/E"].iloc[0]:.2f}x",
-            "EPS": f"{company_overview["EPS"].iloc[0]:.2f}"
+            "Beta": f"{company_overview["Beta"].iloc[0]}",
+            "P/E": f"{company_overview["P/E"].iloc[0]}x",
+            "EPS": f"{company_overview["EPS"].iloc[0]}"
         }
 
         return financials_display,dcf
 
     except Exception as e:
         print(f"Error: {e}")
+        print(traceback.format_exc())
         raise
+
 

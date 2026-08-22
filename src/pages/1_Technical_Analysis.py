@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from config import *
+from config import processed_path
 import os
 
 st.title("Technical Analysis")

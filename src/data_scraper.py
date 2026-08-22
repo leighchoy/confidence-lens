@@ -6,30 +6,11 @@ import finnhub as fh
 import yfinance as yf
 import os
 
-from config import *
 
 load_dotenv()
 client = fh.Client(api_key=os.getenv('FINNHUB_API_KEY'))
 
-"""
-data = client.quote(
-    symbol=TICKEr
-)
-finndf = pd.DataFrame([data])
 
-history = yf.download(
-    tickers="NBIS",
-            interval = "5d",
-            start = "2025-01-01",
-            end = datetime.today().strftime("%Y-%m-%d")
-                      )
-                      
-    ticker = input("Enter ticker symbol: ").upper()
-    intv = input("Enter interval (Valid interval: 1m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo): ")
-    st = input("Enter start date (YYYY-MM-DD): ")
-    e = input("Enter end date (YYYY-MM-DD): ")
-    
-"""
 
 """
 Function to handle null values and convert strings to floats
@@ -74,7 +55,6 @@ def get_income_statement(ticker)->pd.DataFrame:
     )
     try:
         r = requests.get(url)
-        print(url)
         data = r.json()
         articles = data.get("annualReports", [])
         records = []
@@ -242,6 +222,3 @@ def get_company_overview(ticker)->pd.DataFrame:
     except Exception as e:
         print(f"Error: {e}")
         return pd.DataFrame()
-
-income_df = get_income_statement("NBIS")
-print(income_df.columns.tolist())
