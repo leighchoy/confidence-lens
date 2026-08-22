@@ -34,5 +34,5 @@ time.sleep(1.1)
 company_overview = get_company_overview(ticker)
 
 financials, dcf = calculate_all(balance_df, price_df, income_df, cash_df, company_overview)
-thesis = get_lm_thesis(ticker, financials, dcf, results_df, company_overview)
+thesis = get_lm_thesis(ticker, financials, dcf, results_df, company_overview,tech_analysis_df)
 #raise DataSourceError(...) from e

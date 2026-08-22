@@ -13,10 +13,9 @@ load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 results_df = pd.DataFrame(pd.read_csv(model_training_path("trimmed_class_report_xgb.csv")))
-ta_df = pd.DataFrame(pd.read_csv(processed_path("tech_analysis.csv")))
 
 
-def get_lm_thesis(ticker,financials,dcf,results_df,company_overview):
+def get_lm_thesis(ticker,financials,dcf,results_df,company_overview,ta_df):
     try:
 
         prediction,probability = get_prediction(xgb_model,feature_cols,ta_df)

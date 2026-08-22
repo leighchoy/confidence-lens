@@ -31,7 +31,7 @@ def run_cs_model(ticker:str,start_date:str,end_date:str):
     company_overview = get_company_overview(ticker)
 
     financials, dcf = calculate_all(balance_df, price_df, income_df, cash_df, company_overview)
-    thesis = get_lm_thesis(ticker, financials, dcf, results_df, company_overview)
+    thesis = get_lm_thesis(ticker, financials, dcf, results_df, company_overview,tech_analysis_df)
 
     return{
         "prediction":prediction,
