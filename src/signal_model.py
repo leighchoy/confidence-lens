@@ -17,7 +17,6 @@ import matplotlib.pyplot as plt
 
 
 
-ta_df = pd.DataFrame(pd.read_csv(processed_path("tech_analysis.csv")))
 """
 Helper function to drop features and split data in 80/20 split.
 Not using randomised split as future data would help the model predict in a more biased manner.
