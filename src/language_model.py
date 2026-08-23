@@ -12,14 +12,14 @@ load_dotenv()
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-results_df = pd.DataFrame(pd.read_csv(model_training_path("trimmed_class_report_xgb.csv")))
+#results_df = pd.DataFrame(pd.read_csv(model_training_path("trimmed_class_report_xgb.csv")))
 
 
 def get_lm_thesis(ticker,financials,dcf,results_df,company_overview,ta_df):
     try:
 
         prediction,probability = get_prediction(xgb_model,feature_cols,ta_df)
-        ROC = results_df["ROC AUC"][1]
+        roc = results_df["ROC AUC"][1]
         precision  = results_df["precision"][1]
         recall  = results_df["recall"][1]
         macro_f1 = results_df["f1-score"][1]
@@ -43,7 +43,7 @@ def get_lm_thesis(ticker,financials,dcf,results_df,company_overview,ta_df):
         Probability of Buy (class 1): {probability:.1%}
     
         Model performance (historical reliability):
-        ROC AUC: {ROC:.3f}
+        ROC AUC: {roc:.3f}
         Precision: {precision:.3f}
         Recall: {recall:.3f}
         Macro F1: {macro_f1:.3f}

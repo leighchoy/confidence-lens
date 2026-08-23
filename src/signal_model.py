@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 
 
-
+ta_df = pd.DataFrame(pd.read_csv(processed_path("tech_analysis.csv")))
 """
 Helper function to drop features and split data in 80/20 split.
 Not using randomised split as future data would help the model predict in a more biased manner.
@@ -175,38 +175,16 @@ def append_summary_row (results, model_name, config_name, y_test, y_pred, y_prob
     })
 
 
-def evaluate_model(df : pd.DataFrame,model_type) -> pd.DataFrame:
+def evaluate_model(df : pd.DataFrame) -> pd.DataFrame:
     X_train, X_test, test, train, y_train, y_test = prepare_data(df)
-    if model_type == "xgboost":
-        model, y_pred , y_prob,_,_= train_model_xgb(df)
-    elif model_type == "rf":
-        model, y_pred, y_prob = train_model_rf(df)
-    else :
-        model, y_pred, y_prob = train_model_lr(df)
+
+    model, y_pred , y_prob,_,_= train_model_xgb(df)
+
 
     class_report = pd.DataFrame(classification_report(y_test, y_pred,output_dict=True)).T
     class_report["ROC AUC"] = roc_auc_score(y_test, y_prob)
     class_report["Model"] = model.__class__.__name__
 
-    buy_signals = y_pred.sum()
-    total_days = len(y_pred)
-
-
-    results = pd.DataFrame({
-        "Prediction" : y_pred,
-        "Probability" : y_prob,
-        "Actual" : y_test
-    })
-    importance = pd.DataFrame({
-        "feature": X_train.columns,
-        "importance": model.feature_importances_  # abs value since negative = predicts down
-    }).sort_values("importance", ascending=False)
-
-    plt.figure(figsize=(10, 10))
-    plt.title('Feature Importance)')
-    plt.barh(importance["feature"], importance["importance"])
-    plt.xlabel('Coefficient magnitude')
-    plt.tight_layout()
 
     return class_report
 
@@ -220,3 +198,4 @@ def get_prediction(model,feature_cols,X : pd.DataFrame,threshold : float = 0.4)-
     except Exception as e:
         print(f"Error: {e}")
         print(traceback.format_exc())
+

@@ -16,6 +16,8 @@ from data_modifier import *
 
 #@st.cache_data(ttl=3600)
 def run_cs_model(ticker:str,start_date:str,end_date:str):
+    results_df = pd.DataFrame(pd.read_csv(model_training_path("trimmed_class_report_xgb.csv")))
+
     price_df = get_history(ticker, start_date, end_date)
     price_df = clean_history(price_df)
     tech_analysis_df = tech_analysis(price_df)
