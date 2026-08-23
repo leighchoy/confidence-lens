@@ -4,27 +4,28 @@ import plotly.graph_objects as go
 from config import processed_path
 import os
 
+from main import tech_analysis_df
+
 st.title("Technical Analysis")
 
 fig = go.Figure()
-ta_df = pd.DataFrame(pd.read_csv(processed_path("tech_analysis.csv")))
 columns_to_drop = ["Volume", "target",
                    "return_lag1","close_lag1","close_lag2","obv",
                   "High","Low","Open","rsi","macd","atr"]
-ta_df = ta_df.drop(columns = columns_to_drop)
-ta_df.set_index("Date", inplace=True)
+tech_analysis_df = st.session_state.tech_analysis_df
+tech_analysis_df = tech_analysis_df.drop(columns = columns_to_drop)
 
-for i in ta_df.columns:
-    ta_df[i] = pd.to_numeric(ta_df[i], errors="coerce")
+for i in tech_analysis_df.columns:
+    tech_analysis_df[i] = pd.to_numeric(tech_analysis_df[i], errors="coerce")
 
 
 
-choice = st.multiselect("Metrics", ta_df.columns.tolist())
+choice = st.multiselect("Metrics", tech_analysis_df.columns.tolist())
 
 for name in choice:
 
-    if name in ta_df.columns:
-        fig.add_trace(go.Scatter(x=ta_df.index, y=ta_df[name], name=name))
+    if name in tech_analysis_df.columns:
+        fig.add_trace(go.Scatter(x=tech_analysis_df.index, y=tech_analysis_df[name], name=name))
 
     else:
         st.warning(f"{name} not in data")

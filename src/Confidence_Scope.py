@@ -9,8 +9,9 @@ from signal_model import get_prediction
 import datetime
 from language_model import get_lm_thesis
 from fundamental_calculations import calculate_all
-from data_scraper import *
-from data_modifier import *
+from data_scraper import get_cash_flow,get_balance_sheet,get_income_statement,get_history,get_company_overview
+from data_modifier import clean_history
+import pandas as pd
 
 
 
@@ -21,6 +22,8 @@ def run_cs_model(ticker:str,start_date:str,end_date:str):
     price_df = get_history(ticker, start_date, end_date)
     price_df = clean_history(price_df)
     tech_analysis_df = tech_analysis(price_df)
+
+    st.session_state.tech_analysis_df = tech_analysis_df
 
     prediction, probability = get_prediction(xgb_model, feature_cols, tech_analysis_df)
 

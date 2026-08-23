@@ -187,7 +187,7 @@ def evaluate_model(df : pd.DataFrame) -> pd.DataFrame:
 
     return class_report
 
-def get_prediction(model,feature_cols,X : pd.DataFrame,threshold : float = 0.4)-> tuple[int,float]:
+def get_prediction(model,feature_cols,X : pd.DataFrame,threshold : float = 0.25)-> tuple[int,float]:
     try:
         X = X[feature_cols]
         latest = X.iloc[[-1]]
