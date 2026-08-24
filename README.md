@@ -2,8 +2,12 @@
 An ML and LLM assisted tool that provides buy or don't buy signals for tickers based on company data including price, 
 technical indicators, fundamentals and XGBoost classification
 
+Live deployed webapp: https://confidencescope.streamlit.app
+
 1. Tech Stack and environment
-Python, use of Alpha Vantage apis for fundamentals data and news and sentiment data. Use of yfinance for stock price data. Use of ta library in Python for technical analysis metrics. Use of Groq api for language model. Use of Logistic Regression, XGBoost classifier and Random Forest classifier for predictive signal model. Use of Streamlit for app.
+Python, use of Alpha Vantage apis for fundamentals data and news and sentiment data. Use of yfinance for stock price data.
+Use of ta library in Python for technical analysis metrics. Use of Groq api for language model.
+Use of Logistic Regression, XGBoost classifier and Random Forest classifier for predictive signal model. Use of Streamlit for app.
 
 2. Structure and Technical choices
 i. Initially was using Finnhub for the news data and Finbert for making sentiment, discovered small limit to range of 
@@ -16,7 +20,7 @@ vi. Used main.py for local testing with live API calls before plugging into stre
 vii. Removed all sentiment functions
 
 3. Findings
-i. XGBoost outperformed Linear Regression and Random Forest with 73.1% accuracy, 83.3% precision, 61% recall and 0.725 
+i. XGBoost outperformed Logistic Regression and Random Forest with 73.1% accuracy, 83.3% precision, 61% recall and 0.725 
 ROC AUC score on a chronological 80/20 split
 ii. Sentiment features were tested individually and in combination with technical indicators and did not improve any of 
 the model performances or results
@@ -30,11 +34,30 @@ iv. Proper backtesting or adding algorithmic trading options
 v. Ability for user to change forecast
 vi. Walk forward validation to avoid overfitting further and gives true equity curve on how the model handles new windows
 vii. Polish fundamental_calculations.py for example replacing fixed values
+viii. Increasing amount of data to train model on
 
 5. Limitations
-i. Roughly 350 rows of data
-ii. Single chronological split as opposed walk-forward/expanding window
+i. Roughly 350 rows of data which means that the model's performance might not be completely accurate. i.e. performance 
+   may have been skewed by a bull or bear run
+ii. Single chronological split as opposed to walk-forward/expanding window. Walk-forward validation would be better for 
+    training this particular model as the stock market is not a static or predicatable entity
 
-Requirements
+6. Requirements
+Python 3.12
+API Keys;
+Alpha Vantage : https://www.alphavantage.co/support/#api-key
+Groq : https://console.groq.com/keys
 
-Quick start
+7. Quick start
+1. Clone repo
+git clone https://github.com/leighchoy/confidence-lens.git
+cd confidence-lens
+2. Install dependencies
+pip install -r requirements.txt
+3. Create .env file in project root with your api keys
+ALPHAV_API_KEY = your_key
+GROQ_API_KEY = your_key
+4. Run app locally
+streamlit run src/Confidence_Scope.py
+
+

@@ -95,7 +95,6 @@ def get_lm_thesis(ticker,financials,dcf,results_df,company_overview,ta_df):
         )
         return completion.choices[0].message.content
     except Exception as e:
-        print(e)
-        traceback.print_exc()
+        print("Error retrieving language model thesis:",e)
 
 

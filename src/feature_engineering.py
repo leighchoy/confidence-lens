@@ -32,4 +32,4 @@ def tech_analysis(merged_df: pd.DataFrame) -> pd.DataFrame:
         merged_df = merged_df.dropna(subset =[ "close_lag1", "close_lag2", "return_lag1","target"])
         return merged_df
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error adding technical indicators: {e}")

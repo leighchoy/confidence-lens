@@ -195,6 +195,5 @@ def get_prediction(model,feature_cols,X : pd.DataFrame,threshold : float = 0.25)
         prediction = 1 if probability >= threshold else 0
         return prediction, probability
     except Exception as e:
-        print(f"Error: {e}")
-        print(traceback.format_exc())
+        print(f"Error getting model prediction: {e}")
 

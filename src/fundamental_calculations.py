@@ -42,8 +42,8 @@ def calculate_wacc(settings:dict) -> float:
         cost_of_debt = settings["interest_expense"] / settings["total_debt"] if settings["total_debt"] > 0 else 0.05
 
         #Tax rate
-        tax_rate = min(0.25, settings["income_tax_expense"] / settings["ebit"]) if settings["revenue"] > 0 else 0.25
-
+        tax_rate = settings["income_tax_expense"] / settings["ebit"] if settings["ebit"] > 0 else 0.25
+        tax_rate = max(0, min(tax_rate, 0.25))
         #WACC
         wacc = (weight_debt * cost_of_debt * (1 - tax_rate)) + (weight_equity * cost_of_equity)
 
@@ -133,6 +133,8 @@ def format_amount(amount):
     absolute_amount = abs(amount)
 
     if absolute_amount >= 1_000_000_000:
+        return f"{minus}${absolute_amount / 1_000_000_000:.1f} trillion"
+    if absolute_amount >= 1_000_000_000:
         return f"{minus}${absolute_amount / 1_000_000_000:.1f} billion"
     if absolute_amount >= 1_000_000:
         return f"{minus}${absolute_amount / 1_000_000:.1f} million"
@@ -166,11 +168,11 @@ def calculate_all(balance_df : pd.DataFrame, price_df: pd.DataFrame, income_df :
 
         market_cap = settings["outstanding_shares"] * settings["current_price"]
         if settings["market_fcf"] > 0:
-            price_to_fcf = round((settings["current_price"] / settings["market_fcf"]),2)
+            price_to_fcf = round((market_cap / settings["market_fcf"]),2)
         else :
             price_to_fcf = "Calculation for price/free cash flow not meaningful; company has negative free cash flow"
         if settings["operating_cash_flow"] > 0:
-            price_to_ocf = round((settings["current_price"] / settings["operating_cash_flow"]),2)
+            price_to_ocf = round((market_cap / settings["operating_cash_flow"]),2)
         else :
             price_to_ocf = "Calculation for Price/Operating Cash Flow not meaningful; company has negative operating cash flow"
 
@@ -200,8 +202,7 @@ def calculate_all(balance_df : pd.DataFrame, price_df: pd.DataFrame, income_df :
         return financials_display,dcf
 
     except Exception as e:
-        print(f"Error: {e}")
-        print(traceback.format_exc())
-        raise
+        print(f"Error calculating fundamental ratios: {e}")
+
 
 

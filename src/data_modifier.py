@@ -10,5 +10,5 @@ def clean_history(price_df: pd.DataFrame) -> pd.DataFrame:
         price_df.sort_index(ascending = True, inplace=True)
         return price_df
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error cleaning stock price history: {e}")
 

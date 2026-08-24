@@ -2,15 +2,11 @@ from dotenv import load_dotenv
 
 import requests
 import pandas as pd
-import finnhub as fh
 import yfinance as yf
 import os
 
 
 load_dotenv()
-client = fh.Client(api_key=os.getenv('FINNHUB_API_KEY'))
-
-
 
 """
 Function to handle null values and convert strings to floats
@@ -21,8 +17,8 @@ def clean_data(input):
         if input == None or input == "" or input == "None":
             return 0
         return float(input)
-    except(ValueError, TypeError):
-        return 0
+    except Exception as e:
+        print("Error cleaning company fundamental series")
 
 def get_history(ticker,start_date,end_date):
 
@@ -40,8 +36,7 @@ def get_history(ticker,start_date,end_date):
         return price_df
 
     except Exception as e:
-        print(f"Error: {e}")
-        return None
+        print(f"Error retrieving stock price history: {e}")
 
 
 def get_income_statement(ticker)->pd.DataFrame:
@@ -73,7 +68,7 @@ def get_income_statement(ticker)->pd.DataFrame:
             })
         return pd.DataFrame(records)
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error retrieving income statement: {e}")
         return pd.DataFrame()
 
 def get_cash_flow(ticker)->pd.DataFrame:
@@ -99,7 +94,7 @@ def get_cash_flow(ticker)->pd.DataFrame:
 
         return pd.DataFrame(records)
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error retrieving cash flow statement: {e}")
         return pd.DataFrame()
 
 def get_balance_sheet(ticker)->pd.DataFrame:
@@ -126,7 +121,7 @@ def get_balance_sheet(ticker)->pd.DataFrame:
         records = pd.DataFrame(records)
         return records
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error retrieving balance sheet: {e}")
         return pd.DataFrame()
 
 def get_earnings_call(ticker)->tuple[pd.DataFrame,pd.DataFrame]:
@@ -162,8 +157,8 @@ def get_earnings_call(ticker)->tuple[pd.DataFrame,pd.DataFrame]:
         yearly_records = pd.DataFrame(yearly_records)
         return quarterly_records, yearly_records
     except Exception as e:
-        print(f"Error: {e}")
-        return pd.DataFrame()
+        print(f"Error retrieving quarterly and yearly earnings calls: {e}")
+        return pd.DataFrame(),pd.DataFrame()
 
 
 def get_earnings_estimates(ticker)->pd.DataFrame:
@@ -192,7 +187,7 @@ def get_earnings_estimates(ticker)->pd.DataFrame:
         records = pd.DataFrame(records)
         return records
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error retrieving earnings estimates: {e}")
         return pd.DataFrame()
 
 
@@ -220,5 +215,5 @@ def get_company_overview(ticker)->pd.DataFrame:
         records = pd.DataFrame([records])
         return records
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error retrieving company overview: {e}")
         return pd.DataFrame()

@@ -4,7 +4,6 @@ import plotly.graph_objects as go
 from config import processed_path
 import os
 
-from main import tech_analysis_df
 
 st.title("Technical Analysis")
 
