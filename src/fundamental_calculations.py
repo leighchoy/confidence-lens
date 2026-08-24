@@ -123,7 +123,7 @@ def calculate_dcf(settings : dict,forecast_years = 5,terminal_growth: float = 0.
         return dcf_values
 
     except Exception as e:
-        return {"Error": str(e),
+        return {"error": str(e),
                 "dcf_price_per_share": 0}
 
 def format_amount(amount):
@@ -132,8 +132,8 @@ def format_amount(amount):
     minus = "-" if amount < 0 else ""
     absolute_amount = abs(amount)
 
-    if absolute_amount >= 1_000_000_000:
-        return f"{minus}${absolute_amount / 1_000_000_000:.1f} trillion"
+    if absolute_amount >= 1_000_000_000_000:
+        return f"{minus}${absolute_amount / 1_000_000_000_000:.1f} trillion"
     if absolute_amount >= 1_000_000_000:
         return f"{minus}${absolute_amount / 1_000_000_000:.1f} billion"
     if absolute_amount >= 1_000_000:
