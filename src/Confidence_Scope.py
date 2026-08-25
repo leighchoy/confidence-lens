@@ -15,7 +15,7 @@ import pandas as pd
 
 
 
-#@st.cache_data(ttl=3600)
+@st.cache_data(ttl=3600)
 def run_cs_model(ticker:str,start_date:str,end_date:str):
     results_df = pd.DataFrame(pd.read_csv(model_training_path("trimmed_class_report_xgb.csv")))
 
