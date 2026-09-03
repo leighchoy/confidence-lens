@@ -1,4 +1,4 @@
-# confidence-lens
+# confidence-scope
 
 ![Home Page](images/HomePage.png)
 ![Thesis Example](images/Submitted.png)
